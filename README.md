@@ -1,35 +1,34 @@
 # ساحة الخدع
 
-لعبة بطاقات عربية مستوحاة من أجواء التحقيق والمافيا، بأسلوب مواجهة قريب من Hearthstone، ضد بوت داخل المتصفح.
+لعبة بطاقات عربية ضد بوت داخل المتصفح، مبنية بـ Next.js وTypeScript، وتستخدم تصدير static مناسب لـ GitHub Pages.
 
-## تشغيل محلي
+## التشغيل المحلي
 
 ```bash
 npm install
 npm test
-npx next build
+npm run build
 ```
 
-ولفتح النسخة المصدرة مباشرة:
+بعد البناء ستجد النسخة المصدرة داخل `out/`.
 
-- افتح `out/index.html`
+## صور البطاقات
 
-## إضافة صور البطاقات
+ضع صور البطاقات داخل `public/cards/` بنفس أسماء معرفات البطاقات، مثل:
 
-ضع الصور داخل `public/cards/` بنفس أسماء معرفات البطاقات:
-
-- `public/cards/street_informant.webp`
+- `public/cards/thief.webp`
+- `public/cards/doctor.webp`
+- `public/cards/guard.webp`
 - `public/cards/shadow_blade.webp`
 - `public/cards/masked_judge.webp`
 
-وإذا لم توجد صورة لبطاقة معينة، سيظهر تلقائياً ملف placeholder.
+إذا لم توجد صورة لبطاقة معينة فسيظهر تلقائيًا الملف `card-placeholder.svg`.
 
 ## النشر على GitHub Pages
 
-1. ارفع المشروع إلى GitHub.
-2. تأكد أن الفرع الرئيسي اسمه `main`.
-3. من إعدادات المستودع افتح `Settings > Pages`.
-4. في خانة Source اختر `GitHub Actions`.
-5. أي push جديد إلى `main` سيشغّل workflow النشر الموجود في `.github/workflows/deploy-pages.yml`.
+1. تأكد أن الفرع الرئيسي هو `main`.
+2. افتح `Settings > Pages` في GitHub.
+3. اختر `GitHub Actions` كمصدر للنشر.
+4. أي `push` جديد إلى `main` سيشغّل الملف `.github/workflows/deploy-pages.yml`.
 
-الـ workflow يبني الموقع كنسخة static مناسبة لـ GitHub Pages ويشغّل الاختبارات قبل النشر.
+الـ workflow يقوم بتثبيت الاعتمادات، تشغيل الاختبارات، بناء النسخة static، ثم نشرها على GitHub Pages.
