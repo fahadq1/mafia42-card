@@ -1,0 +1,16 @@
+<svg width="720" height="420" viewBox="0 0 720 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="420" rx="32" fill="#09111F"/>
+  <rect x="16" y="16" width="688" height="388" rx="24" fill="url(#bg)" stroke="rgba(255,255,255,0.16)"/>
+  <circle cx="150" cy="120" r="88" fill="#0EA5E9" fill-opacity="0.18"/>
+  <circle cx="570" cy="300" r="120" fill="#FB7185" fill-opacity="0.16"/>
+  <path d="M240 286C240 225.249 289.249 176 350 176H370C430.751 176 480 225.249 480 286V292H240V286Z" fill="#F8FAFC" fill-opacity="0.1"/>
+  <circle cx="360" cy="130" r="56" fill="#F8FAFC" fill-opacity="0.12"/>
+  <text x="360" y="342" text-anchor="middle" fill="#F8FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">Add Card Art</text>
+  <text x="360" y="374" text-anchor="middle" fill="#B8C3D8" font-family="Segoe UI, Arial, sans-serif" font-size="18">public/cards/&lt;card-id&gt;.webp</text>
+  <defs>
+    <linearGradient id="bg" x1="46" y1="40" x2="650" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#172554"/>
+    </linearGradient>
+  </defs>
+</svg>
