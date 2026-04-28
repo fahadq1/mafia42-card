@@ -35,9 +35,7 @@ echo ==============================
 "C:\Program Files\Git\cmd\git.exe" commit -m "%COMMIT_MSG%"
 if errorlevel 1 (
   echo.
-  echo No commit created. This can happen if there are no changes.
-  pause
-  exit /b 1
+  echo No new commit was created. Continuing to push any pending commits...
 )
 
 echo.

@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { runAiTurnStep } from "@/lib/game/ai";
 import { decks, getDeck } from "@/lib/game/content";
 import {
@@ -16,6 +16,18 @@ import { AttackTarget, CardDefinition, GameState, MinionInstance } from "@/lib/g
 
 const AI_DELAY_MS = 850;
 const FALLBACK_CARD_ART = "cards/card-placeholder.svg";
+
+interface InspectCardState {
+  name: string;
+  faction: string;
+  text: string;
+  image: string;
+  attack: number;
+  health: number;
+  maxHealth?: number;
+  cost?: number;
+  keywords?: string[];
+}
 
 function pickOpponentDeck(selectedDeckId: string): string {
   const options = decks.filter((deck) => deck.id !== selectedDeckId);
@@ -52,16 +64,16 @@ function BoardCard({
   minion,
   active,
   onClick,
+  onInspect,
 }: {
   minion: MinionInstance;
   active?: boolean;
   onClick?: () => void;
+  onInspect: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className={`board-card${active ? " is-active" : ""}`}
-      onClick={onClick}
+    <div
+      className="card-shell"
       style={
         {
           "--card-accent": minion.palette.accent,
@@ -69,26 +81,31 @@ function BoardCard({
         } as CSSProperties
       }
     >
-      <CardArtwork src={minion.image} name={minion.name} compact />
-      <span className="role-pill">{minion.faction}</span>
-      <strong>{minion.name}</strong>
-      <span className="card-text">{minion.text}</span>
-      <div className="stats-row">
-        <span>{minion.attack} هجوم</span>
-        <span>
-          {minion.health}/{minion.maxHealth} صحة
-        </span>
-      </div>
-      <div className="keywords-row">
-        {minion.keywords.length > 0 ? (
-          minion.keywords.map((tag) => (
-            <span key={tag}>{tag === "taunt" ? "استفزاز" : "اندفاع"}</span>
-          ))
-        ) : (
-          <span>{minion.sleeping ? "ينتظر الدور" : "جاهز"}</span>
-        )}
-      </div>
-    </button>
+      <button
+        type="button"
+        className={`board-card${active ? " is-active" : ""}`}
+        onClick={onClick}
+      >
+        <CardArtwork src={minion.image} name={minion.name} compact />
+        <div className="combat-stats">
+          <span>{minion.attack}</span>
+          <span>
+            {minion.health}/{minion.maxHealth}
+          </span>
+        </div>
+      </button>
+      <button
+        type="button"
+        className="card-info-button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onInspect();
+        }}
+        aria-label={`معلومات ${minion.name}`}
+      >
+        !
+      </button>
+    </div>
   );
 }
 
@@ -96,17 +113,16 @@ function HandCard({
   card,
   playable,
   onPlay,
+  onInspect,
 }: {
   card: CardDefinition;
   playable: boolean;
   onPlay: () => void;
+  onInspect: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className={`hand-card${playable ? " is-playable" : ""}`}
-      disabled={!playable}
-      onClick={onPlay}
+    <div
+      className="card-shell"
       style={
         {
           "--card-accent": card.palette.accent,
@@ -114,16 +130,31 @@ function HandCard({
         } as CSSProperties
       }
     >
-      <span className="mana-gem">{card.cost}</span>
-      <CardArtwork src={card.image} name={card.name} />
-      <span className="role-pill">{card.faction}</span>
-      <strong>{card.name}</strong>
-      <span className="card-text">{card.text}</span>
-      <div className="stats-row">
-        <span>{card.attack} هجوم</span>
-        <span>{card.health} صحة</span>
-      </div>
-    </button>
+      <button
+        type="button"
+        className={`hand-card${playable ? " is-playable" : ""}`}
+        disabled={!playable}
+        onClick={onPlay}
+      >
+        <span className="mana-gem">{card.cost}</span>
+        <CardArtwork src={card.image} name={card.name} />
+        <div className="combat-stats">
+          <span>{card.attack}</span>
+          <span>{card.health}</span>
+        </div>
+      </button>
+      <button
+        type="button"
+        className="card-info-button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onInspect();
+        }}
+        aria-label={`معلومات ${card.name}`}
+      >
+        !
+      </button>
+    </div>
   );
 }
 
@@ -131,6 +162,11 @@ export default function HomePage() {
   const [selectedDeckId, setSelectedDeckId] = useState<string>(decks[0].id);
   const [game, setGame] = useState<GameState | null>(null);
   const [selectedAttackerId, setSelectedAttackerId] = useState<string | null>(null);
+  const [inspectedCard, setInspectedCard] = useState<InspectCardState | null>(null);
+  const [latestEvent, setLatestEvent] = useState<string | null>(null);
+  const [boardFlash, setBoardFlash] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const previousEventRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!game || game.winner || game.activePlayer !== "opponent") {
@@ -142,6 +178,26 @@ export default function HomePage() {
     }, AI_DELAY_MS);
 
     return () => window.clearTimeout(timer);
+  }, [game]);
+
+  useEffect(() => {
+    const nextEvent = game?.eventLog[0] ?? null;
+    if (!nextEvent || nextEvent === previousEventRef.current) {
+      return;
+    }
+
+    previousEventRef.current = nextEvent;
+    setLatestEvent(nextEvent);
+    setBoardFlash(true);
+
+    const flashTimer = window.setTimeout(() => setBoardFlash(false), 380);
+    const eventTimer = window.setTimeout(() => setLatestEvent(null), 1800);
+    playFeedbackTone(nextEvent, audioContextRef);
+
+    return () => {
+      window.clearTimeout(flashTimer);
+      window.clearTimeout(eventTimer);
+    };
   }, [game]);
 
   const player = game?.players.player ?? null;
@@ -163,11 +219,13 @@ export default function HomePage() {
     const opponentDeckId = pickOpponentDeck(selectedDeckId);
     setGame(createGame(selectedDeckId, opponentDeckId));
     setSelectedAttackerId(null);
+    setInspectedCard(null);
   }
 
   function resetMatch() {
     setGame(null);
     setSelectedAttackerId(null);
+    setInspectedCard(null);
   }
 
   function playCard(handIndex: number) {
@@ -200,6 +258,7 @@ export default function HomePage() {
       setSelectedAttackerId(null);
       return;
     }
+
     const legalTargets = getLegalAttackTargets(game, "player", minion.instanceId);
     const canStrike = legalTargets.some((target) =>
       canAttack(game, "player", minion.instanceId, target),
@@ -245,6 +304,33 @@ export default function HomePage() {
       }),
     );
     setSelectedAttackerId(null);
+  }
+
+  function inspectHandCard(card: CardDefinition) {
+    setInspectedCard({
+      name: card.name,
+      faction: card.faction,
+      text: card.text,
+      image: card.image,
+      attack: card.attack,
+      health: card.health,
+      cost: card.cost,
+      keywords: card.keywords,
+    });
+  }
+
+  function inspectBoardCard(minion: MinionInstance) {
+    setInspectedCard({
+      name: minion.name,
+      faction: minion.faction,
+      text: minion.text,
+      image: minion.image,
+      attack: minion.attack,
+      health: minion.health,
+      maxHealth: minion.maxHealth,
+      cost: minion.cost,
+      keywords: minion.keywords,
+    });
   }
 
   if (!game) {
@@ -317,13 +403,26 @@ export default function HomePage() {
 
       <section className="battle-layout">
         <aside className="side-panel">
-          <div className="hero-card enemy">
-            <strong>{opponent.name}</strong>
-            <span>{opponent.heroHealth} صحة</span>
-            <span>
-              {opponent.mana}/{opponent.maxMana} مانا
-            </span>
-            <span>{opponent.hand.length} يد</span>
+          <div className="summary-strip">
+            <div className="hero-card enemy">
+              <strong>{opponent.name}</strong>
+              <span>{opponent.heroHealth} صحة</span>
+              <span>
+                {opponent.mana}/{opponent.maxMana} مانا
+              </span>
+              <span>{opponent.hand.length} يد</span>
+            </div>
+            <div className="hero-card player-summary">
+              <strong>{player.name}</strong>
+              <span>{player.heroHealth} صحة</span>
+              <span>
+                {player.mana}/{player.maxMana} مانا
+              </span>
+              <span>{player.hand.length} يد</span>
+            </div>
+            <button type="button" className="ghost-action side-reset" onClick={resetMatch}>
+              رجوع لاختيار التشكيله
+            </button>
           </div>
           <div className="log-panel">
             <h2>سجل الأحداث</h2>
@@ -333,21 +432,23 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <button type="button" className="ghost-action" onClick={resetMatch}>
-            رجوع لاختيار التشكيله
-          </button>
         </aside>
 
-        <section className="board-area">
+        <section className={`board-area${boardFlash ? " is-flashing" : ""}`}>
           <div className="leader-row">
+            <div className="board-hero enemy">
+              <div className="hero-card enemy">
+                <strong>{opponent.name}</strong>
+                <span>{opponent.heroHealth} صحة</span>
+              </div>
+            </div>
             <button
               type="button"
               className={`leader-plate enemy${selectedAttackerId ? " can-target" : ""}`}
               onClick={attackHero}
               disabled={!selectedAttackerId}
             >
-              <strong>{opponent.name}</strong>
-              <span>{opponent.heroHealth} صحة</span>
+              هجوم مباشر
             </button>
           </div>
 
@@ -358,6 +459,7 @@ export default function HomePage() {
                 minion={minion}
                 active={targetIds.has(minion.instanceId)}
                 onClick={() => attackMinion(minion.instanceId)}
+                onInspect={() => inspectBoardCard(minion)}
               />
             ))}
             {Array.from({
@@ -378,6 +480,7 @@ export default function HomePage() {
                 minion={minion}
                 active={selectedAttackerId === minion.instanceId}
                 onClick={() => chooseAttacker(minion)}
+                onInspect={() => inspectBoardCard(minion)}
               />
             ))}
             {Array.from({
@@ -388,12 +491,14 @@ export default function HomePage() {
           </div>
 
           <div className="leader-row player">
-            <div className="leader-plate player">
-              <strong>{player.name}</strong>
-              <span>{player.heroHealth} صحة</span>
-              <span>
-                {player.mana}/{player.maxMana} مانا
-              </span>
+            <div className="board-hero player">
+              <div className="hero-card player-summary">
+                <strong>{player.name}</strong>
+                <span>{player.heroHealth} صحة</span>
+                <span>
+                  {player.mana}/{player.maxMana} مانا
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -419,10 +524,49 @@ export default function HomePage() {
               card={card}
               playable={canPlayCard(game, "player", index)}
               onPlay={() => playCard(index)}
+              onInspect={() => inspectHandCard(card)}
             />
           ))}
         </div>
       </section>
+
+      {latestEvent ? <div className="event-toast">{latestEvent}</div> : null}
+
+      {inspectedCard ? (
+        <div className="result-overlay" onClick={() => setInspectedCard(null)}>
+          <div className="result-card inspect-card" onClick={(event) => event.stopPropagation()}>
+            <div className="inspect-top">
+              <CardArtwork src={inspectedCard.image} name={inspectedCard.name} />
+              <div className="inspect-copy">
+                <span className="eyebrow">{inspectedCard.faction}</span>
+                <h2>{inspectedCard.name}</h2>
+                <p>{inspectedCard.text}</p>
+              </div>
+            </div>
+            <div className="inspect-stats">
+              <span>الكلفة: {inspectedCard.cost ?? "-"}</span>
+              <span>الهجوم: {inspectedCard.attack}</span>
+              <span>
+                الصحة:{" "}
+                {inspectedCard.maxHealth
+                  ? `${inspectedCard.health}/${inspectedCard.maxHealth}`
+                  : inspectedCard.health}
+              </span>
+              <span>
+                الحالة:{" "}
+                {inspectedCard.keywords?.length
+                  ? inspectedCard.keywords
+                      .map((keyword) => (keyword === "taunt" ? "استفزاز" : "اندفاع"))
+                      .join(" - ")
+                  : "عادي"}
+              </span>
+            </div>
+            <button type="button" className="ghost-action" onClick={() => setInspectedCard(null)}>
+              إغلاق
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {game.winner ? (
         <div className="result-overlay">
@@ -447,4 +591,48 @@ export default function HomePage() {
       ) : null}
     </main>
   );
+}
+
+function playFeedbackTone(
+  eventText: string,
+  audioContextRef: MutableRefObject<AudioContext | null>,
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const AudioCtor =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtor) {
+    return;
+  }
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = new AudioCtor();
+  }
+
+  const audioContext = audioContextRef.current;
+  if (audioContext.state === "suspended") {
+    void audioContext.resume();
+  }
+
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const frequency = eventText.includes("لعب")
+    ? 480
+    : eventText.includes("هاجم") || eventText.includes("أصاب")
+      ? 320
+      : 260;
+
+  oscillator.type = "triangle";
+  oscillator.frequency.value = frequency;
+  gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.045, audioContext.currentTime + 0.02);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
 }
