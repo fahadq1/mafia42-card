@@ -29,6 +29,14 @@ function cloneCard(card: CardDefinition): CardDefinition {
   };
 }
 
+function getCardDefinition(cardId: string): CardDefinition {
+  const card = cardCatalog[cardId];
+  if (!card) {
+    throw new Error(`Unknown card id: ${cardId}`);
+  }
+  return card;
+}
+
 function createMinion(card: CardDefinition, ownerId: PlayerId): MinionInstance {
   return {
     instanceId: nextInstanceId(),
@@ -130,7 +138,7 @@ function drawCard(state: GameState, playerId: PlayerId, amount = 1): GameState {
     }
 
     const [nextCardId, ...restDeck] = player.deck;
-    const card = cloneCard(cardCatalog[nextCardId]);
+    const card = cloneCard(getCardDefinition(nextCardId));
     if (player.hand.length >= MAX_HAND_SIZE) {
       nextState = {
         ...nextState,
@@ -329,7 +337,7 @@ function applyBattlecry(state: GameState, ownerId: PlayerId, minionId: string): 
       if (freshOwner.board.length >= MAX_BOARD_SIZE) {
         return appendLog(next, `${card.name} لم يجد مكاناً لاستدعاء المساعد.`);
       }
-      const tokenCard = cardCatalog[card.battlecry.tokenCardId];
+      const tokenCard = getCardDefinition(card.battlecry.tokenCardId);
       const token = createMinion(tokenCard, ownerId);
       next = {
         ...next,

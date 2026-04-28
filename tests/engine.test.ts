@@ -38,7 +38,7 @@ describe("game engine", () => {
           ...current.players.player,
           mana: 10,
           maxMana: 10,
-          hand: [current.players.player.hand[0]],
+          hand: [{ ...cardCatalog.thief }],
           board: [],
         },
       },
@@ -46,7 +46,7 @@ describe("game engine", () => {
 
     const next = reduceGame(state, { type: "play_card", playerId: "player", handIndex: 0 });
     expect(next.players.player.board.length).toBe(1);
-    expect(next.players.player.hand.length).toBe(0);
+    expect(next.players.player.hand.length).toBe(1);
   });
 
   it("resolves combat and removes dead minions", () => {

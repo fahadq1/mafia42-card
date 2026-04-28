@@ -1,8 +1,8 @@
 Add your card images in this folder.
 
 Expected filenames:
-- `https://i.namu.wiki/i/jANpT8gKWQOWxCt80OhHtX8_e300P3FG7g4Uvj4Z09CkPamtB_y-Am1EfvRIWUbdS0wEG2f_iDKz2sgj1_aj9aCqy5SgqN-jJ5N6tRLII_csgRW376ARUjVVsOki07su3-iZcwgWBVCs-ecWHvAlXV2eseCMvss5CqLxCTZhnjw.webp`
-- `alley_doctor.webp`
+- `thief.webp`
+- `shadow_blade.webp`
 - `shadow_blade.webp`
 - `iron_guard.webp`
 - `rumor_spinner.webp`

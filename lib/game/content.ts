@@ -3,12 +3,12 @@ import { CardDefinition, DeckDefinition } from "@/lib/game/types";
 const art = (id: string) => `cards/${id}.webp`;
 
 export const cardCatalog: Record<string, CardDefinition> = {
-  street_informant: {
-    id: "street_informant",
-    name: "مخبر الزقاق",
+  thief: {
+    id: "thief",
+    name: "لص",
     role: "investigator",
-    faction: "قسم الأدلة",
-    image: art("street_informant"),
+    faction: "فريق المافيا",
+    image: art("thief"),
     cost: 1,
     attack: 1,
     health: 2,
@@ -219,8 +219,8 @@ export const decks: DeckDefinition[] = [
     heroTitle: "قائد المراقبة",
     summary: "يركز على التحمل وبناء لوح متين ثم إنهاء المباراة بالتفوق العددي.",
     cardIds: [
-      "street_informant",
-      "street_informant",
+      "thief",
+      "thief",
       "safehouse_keeper",
       "safehouse_keeper",
       "alley_doctor",
@@ -269,7 +269,7 @@ export const decks: DeckDefinition[] = [
     heroTitle: "صانع القرارات",
     summary: "يمزج الحماية مع التلاعب الخفيف باللوح ويحافظ على الضغط التدريجي.",
     cardIds: [
-      "street_informant",
+      "thief",
       "whisper_broker",
       "safehouse_keeper",
       "alley_doctor",
