@@ -3,3 +3,4 @@ node_modules
 out
 dev.log
 dev.err
+tsconfig.tsbuildinfo

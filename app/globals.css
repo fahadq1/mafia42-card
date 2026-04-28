@@ -407,7 +407,8 @@ button {
 }
 
 .board-slot {
-  min-height: 128px;
+  min-height: 0;
+  aspect-ratio: 0.68;
   border-radius: 18px;
   border: 1px dashed rgba(255, 255, 255, 0.12);
   background:
@@ -422,7 +423,8 @@ button {
 
 .board-card,
 .hand-card {
-  min-height: 128px;
+  min-height: 0;
+  aspect-ratio: 0.68;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
     linear-gradient(180deg, var(--card-glow), transparent 38%),
@@ -430,7 +432,8 @@ button {
   color: var(--text);
   padding: 10px;
   display: grid;
-  align-content: start;
+  grid-template-rows: auto 1fr auto;
+  align-content: stretch;
   gap: 8px;
   text-align: right;
   cursor: pointer;
@@ -466,7 +469,7 @@ button {
 }
 
 .card-art {
-  aspect-ratio: 16 / 6.2;
+  aspect-ratio: 3 / 4;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -476,7 +479,7 @@ button {
 }
 
 .card-art.is-compact {
-  aspect-ratio: 16 / 5;
+  aspect-ratio: 3 / 4;
 }
 
 .card-art img {
@@ -601,7 +604,7 @@ button {
 .hand-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(112px, 128px);
+  grid-auto-columns: minmax(132px, 152px);
   gap: 10px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -676,7 +679,7 @@ button {
 
 .inspect-top {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -790,7 +793,7 @@ button {
   .board-slot,
   .board-card,
   .hand-card {
-    min-height: 160px;
+    min-height: 0;
   }
 
   .event-toast {

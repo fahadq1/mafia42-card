@@ -383,7 +383,7 @@ export default function HomePage() {
           </div>
           <div className="hero-badges">
             <span>ضد بوت</span>
-            <span>مواجهة اونلاين</span>
+            <span>قاتل</span>
             <span>تشكيلات جاهزة</span>
           </div>
         </section>

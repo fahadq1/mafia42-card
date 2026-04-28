@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardCatalog } from "../lib/game/content";
+import { cardCatalog, decks } from "../lib/game/content";
 import { createGame, reduceGame } from "../lib/game/engine";
 import { GameState, MinionInstance, PlayerId } from "../lib/game/types";
 
@@ -16,6 +16,7 @@ function buildMinion(cardId: string, ownerId: PlayerId, instanceId: string): Min
     name: card.name,
     role: card.role,
     faction: card.faction,
+    image: card.image,
     cost: card.cost,
     attack: card.attack,
     health: card.health,
@@ -29,6 +30,14 @@ function buildMinion(cardId: string, ownerId: PlayerId, instanceId: string): Min
 }
 
 describe("game engine", () => {
+  it("uses only defined card ids in every deck", () => {
+    for (const deck of decks) {
+      for (const cardId of deck.cardIds) {
+        expect(cardCatalog[cardId]).toBeDefined();
+      }
+    }
+  });
+
   it("plays a card when mana is sufficient", () => {
     const state = withState((current) => ({
       ...current,

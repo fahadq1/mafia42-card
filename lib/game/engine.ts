@@ -223,7 +223,7 @@ export function createGame(selectedDeckId: string, opponentDeckId: string): Game
 
   state = initializeOpeningHand(state);
   state = startTurn(state, "player");
-  return appendLog(state, "انطلقت المواجهة داخل ساحة الخدع.");
+  return appendLog(state, "انطلقت المواجهة داخل ساحة مافيا42.");
 }
 
 function applyBattlecry(state: GameState, ownerId: PlayerId, minionId: string): GameState {
